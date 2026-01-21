@@ -193,6 +193,25 @@ def get_edge_widths_by_type(G):
     
     return edge_widths
 
+def parse_coordinates(coord_string):
+    """
+    Parse coordinate string in format "lat, lon" or "lat,lon".
+    Returns tuple (lat, lon) as floats.
+    """
+    try:
+        parts = coord_string.replace(' ', '').split(',')
+        if len(parts) != 2:
+            raise ValueError("Coordinates must be in format 'latitude, longitude'")
+        lat, lon = float(parts[0]), float(parts[1])
+        if not (-90 <= lat <= 90):
+            raise ValueError("Latitude must be between -90 and 90")
+        if not (-180 <= lon <= 180):
+            raise ValueError("Longitude must be between -180 and 180")
+        print(f"✓ Using coordinates: {lat}, {lon}")
+        return (lat, lon)
+    except ValueError as e:
+        raise ValueError(f"Invalid coordinate format: {e}")
+
 def get_coordinates(city, country):
     """
     Fetches coordinates for a given city and country using geopy.
@@ -234,12 +253,12 @@ def create_poster(city, country, point, dist, output_file):
         time.sleep(0.3)
         
         # 3. Fetch Parks
-        pbar.set_description("Downloading parks/green spaces")
-        try:
-            parks = ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=dist)
-        except:
-            parks = None
-        pbar.update(1)
+        # pbar.set_description("Downloading parks/green spaces")
+        # try:
+        #     parks = ox.features_from_point(point, tags={'leisure': 'park', 'landuse': 'grass'}, dist=dist)
+        # except:
+        #     parks = None
+        # pbar.update(1)
     
     print("✓ All data downloaded successfully!")
     
@@ -253,8 +272,8 @@ def create_poster(city, country, point, dist, output_file):
     # Layer 1: Polygons
     if water is not None and not water.empty:
         water.plot(ax=ax, facecolor=THEME['water'], edgecolor='none', zorder=1)
-    if parks is not None and not parks.empty:
-        parks.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=2)
+    # if parks is not None and not parks.empty:
+    #     parks.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=2)
     
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
@@ -307,18 +326,18 @@ def create_poster(city, country, point, dist, output_file):
             color=THEME['text'], linewidth=1, zorder=11)
 
     # --- ATTRIBUTION (bottom right) ---
-    if FONTS:
-        font_attr = FontProperties(fname=FONTS['light'], size=8)
-    else:
-        font_attr = FontProperties(family='monospace', size=8)
+    # if FONTS:
+    #     font_attr = FontProperties(fname=FONTS['light'], size=8)
+    # else:
+    #     font_attr = FontProperties(family='monospace', size=8)
     
-    ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
-            color=THEME['text'], alpha=0.5, ha='right', va='bottom', 
-            fontproperties=font_attr, zorder=11)
+    # ax.text(0.98, 0.02, "© OpenStreetMap contributors", transform=ax.transAxes,
+    #         color=THEME['text'], alpha=0.5, ha='right', va='bottom', 
+    #         fontproperties=font_attr, zorder=11)
 
     # 5. Save
     print(f"Saving to {output_file}...")
-    plt.savefig(output_file, dpi=300, facecolor=THEME['bg'])
+    plt.savefig(output_file, dpi=600, facecolor=THEME['bg'])
     plt.close()
     print(f"✓ Done! Poster saved as {output_file}")
 
@@ -330,11 +349,15 @@ City Map Poster Generator
 
 Usage:
   python create_map_poster.py --city <city> --country <country> [options]
+  python create_map_poster.py --city <city> --country <country> --center <lat,lon> [options]
 
 Examples:
   # Iconic grid patterns
   python create_map_poster.py -c "New York" -C "USA" -t noir -d 12000           # Manhattan grid
   python create_map_poster.py -c "Barcelona" -C "Spain" -t warm_beige -d 8000   # Eixample district grid
+  
+  # Using specific coordinates (bypasses geocoding)
+  python create_map_poster.py -c "Custom Location" -C "USA" --center "33.789200, -117.853078" -t noir
   
   # Waterfront & canals
   python create_map_poster.py -c "Venice" -C "Italy" -t blueprint -d 4000       # Canal network
@@ -365,6 +388,7 @@ Examples:
 Options:
   --city, -c        City name (required)
   --country, -C     Country name (required)
+  --center          Override with specific coordinates "lat, lon" (optional)
   --theme, -t       Theme name (default: feature_based)
   --distance, -d    Map radius in meters (default: 29000)
   --list-themes     List all available themes
@@ -412,12 +436,14 @@ Examples:
   python create_map_poster.py --city "New York" --country "USA"
   python create_map_poster.py --city Tokyo --country Japan --theme midnight_blue
   python create_map_poster.py --city Paris --country France --theme noir --distance 15000
+  python create_map_poster.py --city Custom --country USA --center "33.789200, -117.853078"
   python create_map_poster.py --list-themes
         """
     )
     
     parser.add_argument('--city', '-c', type=str, help='City name')
     parser.add_argument('--country', '-C', type=str, help='Country name')
+    parser.add_argument('--center', type=str, help='Center coordinates in format "lat, lon" (overrides geocoding)')
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
     parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
@@ -456,7 +482,12 @@ Examples:
     
     # Get coordinates and generate poster
     try:
-        coords = get_coordinates(args.city, args.country)
+        # Use provided coordinates or geocode
+        if args.center:
+            coords = parse_coordinates(args.center)
+        else:
+            coords = get_coordinates(args.city, args.country)
+        
         output_file = generate_output_filename(args.city, args.theme)
         create_poster(args.city, args.country, coords, args.distance, output_file)
         

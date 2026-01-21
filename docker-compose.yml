@@ -9,4 +9,7 @@ services:
     volumes:
       # Local directory to retrieve generated PNGs
       - ./posters:/app/posters
+    environment:
+      # Timeout in seconds for map generation (default: 900s / 15 minutes)
+      - MAP_GENERATION_TIMEOUT=900
     restart: unless-stopped

@@ -10,6 +10,9 @@ POSTER_DIR = os.path.join(BASE_DIR, 'posters')
 THEME_DIR = os.path.join(BASE_DIR, 'themes')
 os.makedirs(POSTER_DIR, exist_ok=True)
 
+# Configurable timeout (default: 15 minutes for larger maps)
+GENERATION_TIMEOUT = int(os.environ.get('MAP_GENERATION_TIMEOUT', 900))
+
 @app.route('/')
 def index():
     themes = []
@@ -41,8 +44,8 @@ def generate():
 
     try:
         existing_files = set(glob.glob(os.path.join(POSTER_DIR, "*.png")))
-        # 5-minute timeout
-        subprocess.run(cmd, check=True, timeout=300)
+        # Use configurable timeout
+        subprocess.run(cmd, check=True, timeout=GENERATION_TIMEOUT)
         
         current_files = set(glob.glob(os.path.join(POSTER_DIR, "*.png")))
         new_files = list(current_files - existing_files)

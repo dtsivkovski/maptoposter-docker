@@ -18,6 +18,7 @@ document.getElementById('mapForm').addEventListener('submit', async (e) => {
             body: JSON.stringify({
                 city: document.getElementById('city').value,
                 country: document.getElementById('country').value,
+                coords: document.getElementById('coords').value,
                 theme: document.getElementById('theme').value,
                 radius: document.getElementById('radius').value
             })

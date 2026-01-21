@@ -16,6 +16,7 @@
                 <form id="mapForm">
                     <label>City <input type="text" id="city" placeholder="e.g. Port Louis" required></label>
                     <label>Country <input type="text" id="country" placeholder="e.g. Mauritius" required></label>
+                    <label>Coordinates (optional) <input type="text" id="coords" placeholder="e.g. 33.789200, -117.853078"></label>
                     <label>Theme
                         <select id="theme">
                             {% for theme in themes %}<option value="{{ theme }}">{{ theme }}</option>{% endfor %}

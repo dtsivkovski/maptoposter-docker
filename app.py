@@ -25,6 +25,7 @@ def generate():
     data = request.json
     city = data.get('city')
     country = data.get('country')
+    coords = data.get('coords', '').strip()
     theme = data.get('theme')
     radius = str(data.get('radius', 15000))
 
@@ -33,6 +34,10 @@ def generate():
 
     # Call the original script present in the clone
     cmd = ["python", "create_map_poster.py", "--city", city, "--country", country, "--distance", radius, "--theme", theme]
+
+    # Include coordinates if provided
+    if coords:
+        cmd.extend(["--center", coords])
 
     try:
         existing_files = set(glob.glob(os.path.join(POSTER_DIR, "*.png")))
